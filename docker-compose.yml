@@ -28,6 +28,9 @@ services:
       - FIRST_SUPERUSER=admin
       - FIRST_SUPERUSER_PASSWORD=admin
       - FIRST_SUPERUSER_EMAIL=admin@example.com
+      - APSCHEDULER_JOBSTORES={"default":{"type":"sqlalchemy","url":"mysql+pymysql://apscheduler:apscheduler_password@db:3306/apscheduler_admin"}}
+      - APSCHEDULER_EXECUTORS={"default":{"type":"threadpool","max_workers":20}}
+      - APSCHEDULER_JOB_DEFAULTS={"coalesce":true,"max_instances":3,"misfire_grace_time":60}
     depends_on:
       - db
       - postgres

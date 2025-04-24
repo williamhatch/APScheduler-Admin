@@ -71,7 +71,7 @@
               <pause-outlined /> 暂停
             </a-button>
             <a-button v-else-if="record.status === 'paused'" type="primary" size="small" @click="resumeJob(record.id)">
-              <play-outlined /> 恢复
+              <play-circle-outlined /> 恢复
             </a-button>
             <a-button type="primary" size="small" @click="executeJob(record.id)">
               <thunderbolt-outlined /> 执行
@@ -103,7 +103,7 @@ import {
   PlusOutlined, 
   SearchOutlined, 
   PauseOutlined, 
-  PlayOutlined, 
+  PlayCircleOutlined, 
   ThunderboltOutlined, 
   EditOutlined, 
   DeleteOutlined,

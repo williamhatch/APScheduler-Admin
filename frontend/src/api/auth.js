@@ -7,16 +7,13 @@ import request from '@/utils/request'
  * @returns {Promise} - 返回登录结果
  */
 export function login(username, password) {
-  const formData = new FormData()
-  formData.append('username', username)
-  formData.append('password', password)
-  
+  // 使用JSON格式发送登录请求
   return request({
     url: '/api/v1/auth/login',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
+    data: {
+      username,
+      password
     }
   })
 }

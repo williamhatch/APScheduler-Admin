@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:16-alpine as build-stage
+FROM node:22-alpine as build-stage
 
 # 设置工作目录
 WORKDIR /app
@@ -9,6 +9,8 @@ COPY package*.json ./
 
 # 安装依赖
 RUN npm install
+# 安装缺失的 echarts 依赖
+RUN npm install echarts@latest
 
 # 复制项目文件
 COPY . .
