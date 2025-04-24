@@ -36,6 +36,11 @@ mock_logs = [
     {"id": 2, "job_id": 2, "status": "failed", "message": "任务执行失败", "created_at": "2025-04-24T13:00:00", "start_time": "2025-04-24T13:00:00", "duration": 0.8}
 ]
 mock_settings = {"timezone": "Asia/Shanghai", "job_misfire_grace_time": 60, "job_coalesce": True, "job_max_instances": 3}
+mock_users = [
+    {"id": 1, "username": "admin", "email": "admin@example.com", "is_active": True, "is_superuser": True},
+    {"id": 2, "username": "user1", "email": "user1@example.com", "is_active": True, "is_superuser": False},
+    {"id": 3, "username": "user2", "email": "user2@example.com", "is_active": False, "is_superuser": False}
+]
 
 # 验证token
 def verify_token(authorization: Optional[str] = Header(None)):
@@ -272,6 +277,97 @@ async def update_settings(token: str = Depends(verify_token), settings_data: Dic
     mock_settings = {**mock_settings, **settings_data.get("settings", {})}
     
     return {"settings": mock_settings}
+
+# 获取用户列表
+@app.get("/api/v1/users")
+async def get_users(
+    token: str = Depends(verify_token),
+    limit: int = Query(10, description="每页数量"),
+    skip: int = Query(0, description="偏移量"),
+    search: Optional[str] = Query(None, description="搜索关键词")
+):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 根据搜索关键词过滤用户
+    filtered_users = mock_users
+    if search:
+        filtered_users = [user for user in mock_users if search.lower() in user["username"].lower() or search.lower() in user["email"].lower()]
+    
+    # 分页
+    paginated_users = filtered_users[skip:skip+limit]
+    
+    # 直接返回数组
+    return paginated_users
+
+# 获取用户详情
+@app.get("/api/v1/users/{user_id}")
+async def get_user(user_id: int, token: str = Depends(verify_token)):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 查找用户
+    for user in mock_users:
+        if user["id"] == user_id:
+            return user
+    
+    raise HTTPException(status_code=404, detail="用户不存在")
+
+# 创建用户
+@app.post("/api/v1/users")
+async def create_user(token: str = Depends(verify_token), user_data: Dict[str, Any] = Body(...)):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 检查用户是否已存在
+    for user in mock_users:
+        if user["username"] == user_data.get("username"):
+            raise HTTPException(status_code=400, detail="用户名已存在")
+    
+    # 创建新用户
+    new_user = {
+        "id": len(mock_users) + 1,
+        "username": user_data.get("username", ""),
+        "email": user_data.get("email", ""),
+        "is_active": user_data.get("is_active", True),
+        "is_superuser": user_data.get("is_superuser", False)
+    }
+    
+    # 添加到用户列表
+    mock_users.append(new_user)
+    
+    return new_user
+
+# 更新用户
+@app.put("/api/v1/users/{user_id}")
+async def update_user(user_id: int, token: str = Depends(verify_token), user_data: Dict[str, Any] = Body(...)):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 查找用户
+    for i, user in enumerate(mock_users):
+        if user["id"] == user_id:
+            # 更新用户信息
+            updated_user = {**user, **user_data}
+            mock_users[i] = updated_user
+            return updated_user
+    
+    raise HTTPException(status_code=404, detail="用户不存在")
+
+# 删除用户
+@app.delete("/api/v1/users/{user_id}")
+async def delete_user(user_id: int, token: str = Depends(verify_token)):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 查找用户
+    for i, user in enumerate(mock_users):
+        if user["id"] == user_id:
+            # 删除用户
+            del mock_users[i]
+            return {"status": "success", "message": "用户已删除"}
+    
+    raise HTTPException(status_code=404, detail="用户不存在")
 
 # 首页
 @app.get("/")
