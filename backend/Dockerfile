@@ -17,13 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . /app/
 
 # 安装Python依赖
-RUN pip install --no-cache-dir fastapi uvicorn python-multipart pydantic-settings
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 创建一个简单的main.py文件，避免导入原始项目的模块
-RUN echo 'from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/")\nasync def root():\n    return {"message": "APScheduler Admin API 服务"}\n' > /app/main.py
+# 创建数据目录
+RUN mkdir -p /app/data
 
 # 暴露端口
 EXPOSE 8000
 
 # 启动命令
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
