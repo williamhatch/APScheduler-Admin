@@ -207,31 +207,66 @@ const fetchDashboardData = async () => {
     loading.value = true
     
     // 获取任务数据
-    const jobs = await getJobs({ limit: 1000 })
+    let jobs = [];
+    try {
+      const jobsResponse = await getJobs({ limit: 1000 });
+      console.log('获取到的任务数据:', jobsResponse);
+      
+      // 确保 jobs 是数组
+      if (jobsResponse && jobsResponse.items && Array.isArray(jobsResponse.items)) {
+        jobs = jobsResponse.items;
+      } else if (Array.isArray(jobsResponse)) {
+        jobs = jobsResponse;
+      } else {
+        console.error('任务数据格式不正确:', jobsResponse);
+        jobs = [];
+      }
+    } catch (jobError) {
+      console.error('获取任务数据失败:', jobError);
+      jobs = [];
+    }
     
     // 计算任务统计
-    stats.totalJobs = jobs.length
-    stats.runningJobs = jobs.filter(job => job.status === 'running').length
-    stats.pausedJobs = jobs.filter(job => job.status === 'paused').length
+    stats.totalJobs = jobs.length;
+    stats.runningJobs = jobs.filter(job => job && job.status === 'running').length;
+    stats.pausedJobs = jobs.filter(job => job && job.status === 'paused').length;
     
     // 获取日志数据
-    const logs = await getLogs({ limit: 10 })
+    let logs = [];
+    try {
+      const logsResponse = await getLogs({ limit: 10 });
+      console.log('获取到的日志数据:', logsResponse);
+      
+      // 确保 logs 是数组
+      if (logsResponse && logsResponse.items && Array.isArray(logsResponse.items)) {
+        logs = logsResponse.items;
+        stats.totalLogs = logsResponse.total || logs.length;
+      } else if (Array.isArray(logsResponse)) {
+        logs = logsResponse;
+        stats.totalLogs = logs.length;
+      } else {
+        console.error('日志数据格式不正确:', logsResponse);
+        logs = [];
+        stats.totalLogs = 0;
+      }
+    } catch (logError) {
+      console.error('获取日志数据失败:', logError);
+      logs = [];
+      stats.totalLogs = 0;
+    }
     
     // 更新最近日志
-    recentLogs.value = logs
-    
-    // 计算日志统计
-    stats.totalLogs = logs.length // 实际项目中应该从API响应中获取总数
+    recentLogs.value = logs;
     
     // 更新图表
-    updateCharts(jobs, logs)
+    updateCharts(jobs, logs);
   } catch (error) {
-    console.error('获取仪表盘数据失败:', error)
-    message.error('获取仪表盘数据失败')
+    console.error('获取仪表盘数据失败:', error);
+    message.error('获取仪表盘数据失败');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 刷新数据
 const refreshData = () => {

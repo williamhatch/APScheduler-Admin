@@ -178,7 +178,7 @@ const fetchJobs = async (params = {}) => {
     
     // 构建查询参数
     const queryParams = {
-      skip: ((pagination.current - 1) * pagination.pageSize),
+      offset: ((pagination.current - 1) * pagination.pageSize),
       limit: pagination.pageSize,
       ...params
     }
@@ -192,18 +192,37 @@ const fetchJobs = async (params = {}) => {
     }
     
     // 调用API获取任务列表
-    const data = await getJobs(queryParams)
+    let items = [];
+    let total = 0;
+    
+    try {
+      const response = await getJobs(queryParams);
+      console.log('获取到的任务列表数据:', response);
+      
+      // 确保 items 是数组
+      if (response && response.items && Array.isArray(response.items)) {
+        items = response.items;
+        total = response.total || items.length;
+      } else if (Array.isArray(response)) {
+        items = response;
+        total = items.length;
+      } else {
+        console.error('任务列表数据格式不正确:', response);
+      }
+    } catch (error) {
+      console.error('API调用失败:', error);
+    }
     
     // 更新数据
-    jobs.value = data
-    pagination.total = data.length // 实际项目中应该从API响应中获取总数
+    jobs.value = items;
+    pagination.total = total;
   } catch (error) {
-    console.error('获取任务列表失败:', error)
-    message.error('获取任务列表失败')
+    console.error('获取任务列表失败:', error);
+    message.error('获取任务列表失败');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 重置搜索条件
 const resetSearch = () => {

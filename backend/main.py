@@ -95,8 +95,8 @@ async def get_jobs(
     # 分页
     paginated_jobs = filtered_jobs[offset:offset+limit]
     
-    # 返回符合前端期望的格式
-    return {"items": paginated_jobs, "total": len(filtered_jobs)}
+    # 直接返回数组，而不是包含 items 和 total 的对象
+    return paginated_jobs
 
 # 获取任务详情
 @app.get("/api/v1/jobs/{job_id}")
@@ -211,8 +211,8 @@ async def get_logs(
     # 分页
     paginated_logs = filtered_logs[offset:offset+limit]
     
-    # 返回符合前端期望的格式
-    return {"items": paginated_logs, "total": len(filtered_logs)}
+    # 直接返回数组，而不是包含 items 和 total 的对象
+    return paginated_logs
 
 # 获取日志详情
 @app.get("/api/v1/logs/{log_id}")
