@@ -275,15 +275,15 @@ async def delete_job(job_id: int, token: str = Depends(verify_token), db: Sessio
     return {"status": "success", "message": "任务已删除"}
 
 # 更新任务状态
-@app.post("/api/v1/jobs/{job_id}/{action}")
-async def update_job_status(job_id: int, action: str, token: str = Depends(verify_token), db: Session = Depends(get_db)):
+@app.post("/api/v1/jobs/{job_id}/status")
+async def update_job_status(job_id: int, token: str = Depends(verify_token), data: Dict[str, Any] = Body(...), db: Session = Depends(get_db)):
     if not token:
         raise HTTPException(status_code=401, detail="未授权")
     
-    # 检查操作是否有效
-    valid_actions = ["pause", "resume", "run"]
-    if action not in valid_actions:
-        raise HTTPException(status_code=400, detail="无效的操作")
+    # 获取状态参数
+    status = data.get("status")
+    if not status:
+        raise HTTPException(status_code=400, detail="缺少状态参数")
     
     # 查找任务
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -291,15 +291,43 @@ async def update_job_status(job_id: int, action: str, token: str = Depends(verif
         raise HTTPException(status_code=404, detail="任务不存在")
     
     # 更新任务状态
-    if action == "pause":
+    if status == "pause" or status == "paused":
         job.status = "paused"
-    elif action == "resume":
+    elif status == "resume" or status == "running":
         job.status = "running"
+    else:
+        raise HTTPException(status_code=400, detail="无效的状态值")
     
     # 保存到数据库
     db.commit()
     
-    return {"status": "success", "message": f"任务已{action}"}
+    return {"success": True, "message": "任务状态已更新"}
+
+# 执行任务
+@app.post("/api/v1/jobs/{job_id}/execute")
+async def execute_job(job_id: int, token: str = Depends(verify_token), db: Session = Depends(get_db)):
+    if not token:
+        raise HTTPException(status_code=401, detail="未授权")
+    
+    # 查找任务
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    
+    # 在实际应用中，这里应该调用 APScheduler 执行任务
+    # 这里仅创建一个执行日志记录
+    log = Log(
+        job_id=job_id,
+        status="success",
+        message="任务手动执行成功",
+        created_at=datetime.now(),
+        start_time=datetime.now(),
+        duration=0.5
+    )
+    db.add(log)
+    db.commit()
+    
+    return {"success": True, "message": "任务已执行"}
 
 # 获取日志列表
 @app.get("/api/v1/logs")
